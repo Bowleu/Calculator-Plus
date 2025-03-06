@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,29 +20,36 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.bowleu.probcalc.ui.theme.*
+import com.bowleu.probcalc.ui.theme.DarkGray
+import com.bowleu.probcalc.ui.theme.LightGray
+import com.bowleu.probcalc.ui.theme.MediumGray
+import com.bowleu.probcalc.ui.theme.Orange
+import com.bowleu.probcalc.util.LimitedList
 
 class MainActivity : ComponentActivity() {
     private val calculator = Calculator
@@ -51,93 +59,173 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             var areAllVisible by remember { mutableStateOf(false) }
-            var previousExpressions = remember { LimitedList<String>(3) }
-            var expression by remember { mutableStateOf("456+567") }
-            var result by remember { mutableStateOf("434334") }
+            val previousExpressions = remember { LimitedList<String>(3) }
+            var expression by remember { mutableStateOf("") }
+            var result by remember { mutableStateOf("434") }
             var isExpressionActive by remember { mutableStateOf(true) }
+
+            val onInputButtonClicked = {
+                if (!isExpressionActive) {
+                    previousExpressions.add("$expression = $result")
+                    expression = result
+                }
+                isExpressionActive = true
+            }
             Column(
                 modifier = Modifier
                     .background(color = Color.Black)
                     .fillMaxSize()
                     .padding(15.dp, 0.dp)
             ) {
-                Column(modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.4f)) {
-                    Column(modifier = Modifier
+                Column(
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .weight(0.4f)){
-
+                        .weight(0.4f)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.4f)
+                    ) {
+                        previousExpressions.get(0).let {
+                            if (it != null)
+                                PreviousExpression(it)
+                        }
+                        previousExpressions.get(1).let {
+                            if (it != null)
+                                PreviousExpression(it)
+                        }
+                        previousExpressions.get(2).let {
+                            if (it != null)
+                                PreviousExpression(it)
+                        }
                     }
                     MathLine(expression, isExpressionActive)
                     MathLine(result, !isExpressionActive)
                 }
-                Column(modifier = Modifier.weight(0.6f)){
+                Column(modifier = Modifier.weight(0.6f)) {
                     val equalWeight = Modifier.weight(1f)
-                    val equalWeightRow = Modifier.padding(0.dp, 15.dp).weight(1f)
+                    val equalWeightRow = Modifier
+                        .padding(0.dp, 15.dp)
+                        .weight(1f)
                     if (areAllVisible) {
                         ButtonsRow(equalWeightRow) {
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(
+                                onClick = {
+                                    expression += "C(n, k)"
+                                },
+                                modifier = equalWeight
+                            ) {
                                 ButtonText("C(n, k)", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "A(n, k)"
+                            }, modifier = equalWeight) {
                                 ButtonText("A(n, k)", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "P(n, k)"
+                            }, modifier = equalWeight) {
                                 ButtonText("P(n, k)", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "!С(n, k)"
+                            }, modifier = equalWeight) {
                                 ButtonText("!С(n, k)", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "∑"
+                            }, modifier = equalWeight) {
                                 ButtonText("∑", LightGray)
                             }
                         }
                         ButtonsRow(equalWeightRow) {
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+
+                            }, modifier = equalWeight) {
                                 ButtonText("2nd", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "i"
+                            }, modifier = equalWeight) {
                                 ButtonText("i", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "sin"
+                            }, modifier = equalWeight) {
                                 ButtonText("sin", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "cos"
+                            }, modifier = equalWeight) {
                                 ButtonText("cos", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "tan"
+                            }, modifier = equalWeight) {
                                 ButtonText("tan", LightGray)
                             }
                         }
                         ButtonsRow(equalWeightRow) {
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "x^y"
+                            }, modifier = equalWeight) {
                                 ButtonText("x^y", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "lg"
+                            }, modifier = equalWeight) {
                                 ButtonText("lg", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "ln"
+                            }, modifier = equalWeight) {
                                 ButtonText("ln", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "("
+                            }, modifier = equalWeight) {
                                 ButtonText("(", LightGray)
                             }
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += ")"
+                            }, modifier = equalWeight) {
                                 ButtonText(")", LightGray)
                             }
                         }
                     }
                     ButtonsRow(equalWeightRow) {
                         if (areAllVisible) {
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "√"
+                            }, modifier = equalWeight) {
                                 ButtonText("√", LightGray)
                             }
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression = ""
+                        }, modifier = equalWeight) {
                             ButtonText("AC", Orange)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression = expression.dropLast(1)
+                        }, modifier = equalWeight) {
                             Image(
                                 painter = painterResource(id = R.drawable.delete_last),
                                 contentDescription = "Delete last symbol",
@@ -145,67 +233,118 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.height(20.dp)
                             )
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "%"
+                        }, modifier = equalWeight) {
                             ButtonText("%", Orange)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "÷"
+                        }, modifier = equalWeight) {
                             ButtonText("÷", Orange)
                         }
                     }
                     ButtonsRow(equalWeightRow) {
                         if (areAllVisible) {
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "x!"
+                            }, modifier = equalWeight) {
                                 ButtonText("x!", LightGray)
                             }
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "7"
+                        }, modifier = equalWeight) {
                             ButtonText("7", Color.White)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "8"
+                        }, modifier = equalWeight) {
                             ButtonText("8", Color.White)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "9"
+                        }, modifier = equalWeight) {
                             ButtonText("9", Color.White)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "×"
+                        }, modifier = equalWeight) {
                             ButtonText("×", Orange)
                         }
                     }
                     ButtonsRow(equalWeightRow) {
                         if (areAllVisible) {
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "×10^x"
+                            }, modifier = equalWeight) {
                                 ButtonText("×10^x", LightGray)
                             }
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "4"
+                        }, modifier = equalWeight) {
                             ButtonText("4", Color.White)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "5"
+                        }, modifier = equalWeight) {
                             ButtonText("5", Color.White)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "6"
+                        }, modifier = equalWeight) {
                             ButtonText("6", Color.White)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "-"
+                        }, modifier = equalWeight) {
                             ButtonText("-", Orange)
                         }
                     }
                     ButtonsRow(equalWeightRow) {
                         if (areAllVisible) {
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "π"
+                            }, modifier = equalWeight) {
                                 ButtonText("π", LightGray)
                             }
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "1"
+                        }, modifier = equalWeight) {
                             ButtonText("1", Color.White)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "2"
+                        }, modifier = equalWeight) {
                             ButtonText("2", Color.White)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "3"
+                        }, modifier = equalWeight) {
                             ButtonText("3", Color.White)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "+"
+                        }, modifier = equalWeight) {
                             ButtonText("+", Orange)
                         }
                     }
@@ -214,7 +353,8 @@ class MainActivity : ComponentActivity() {
                         {
                             areAllVisible = !areAllVisible
                             println("areAllVisible: $areAllVisible")
-                        }, modifier = equalWeight) {
+                        }, modifier = equalWeight
+                        ) {
                             val rotationAngle by animateFloatAsState(
                                 targetValue = if (areAllVisible) 180F else 0F,
                                 label = "\"Show all\" button rotation animation"
@@ -229,17 +369,33 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         if (areAllVisible) {
-                            KeyboardButton(onClick = { }, modifier = equalWeight) {
+                            KeyboardButton(onClick = {
+                                onInputButtonClicked()
+                                expression += "e"
+                            }, modifier = equalWeight) {
                                 ButtonText("e", Color.White)
                             }
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += "0"
+                        }, modifier = equalWeight) {
                             ButtonText("0", Color.White)
                         }
-                        KeyboardButton(onClick = { }, modifier = equalWeight) {
+                        KeyboardButton(onClick = {
+                            onInputButtonClicked()
+                            expression += if (expression.isEmpty())
+                                "0,"
+                            else
+                                ","
+                        }, modifier = equalWeight) {
                             ButtonText(",", Color.White)
                         }
-                        KeyboardButton(onClick = {isExpressionActive = false}, modifier = equalWeight, backgroundColor = Orange) {
+                        KeyboardButton(
+                            onClick = { isExpressionActive = false },
+                            modifier = equalWeight,
+                            backgroundColor = Orange
+                        ) {
                             ButtonText("=", Color.White)
                         }
                     }
@@ -250,28 +406,37 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun PreviousExpression(expression: String) {
-        Text(text = expression,
+        Text(
+            text = expression,
             modifier = Modifier
                 .background(Color.Transparent)
                 .fillMaxWidth(),
-            fontSize = 15.sp,
+            fontSize = 20.sp,
             fontFamily = FontFamily.Serif,
             fontStyle = FontStyle.Normal,
             color = MediumGray,
-            )
+            textAlign = TextAlign.End
+        )
     }
 
     @Composable
     private fun ButtonsRow(modifier: Modifier, content: @Composable (() -> Unit)) {
-        Row(modifier = modifier,
+        Row(
+            modifier = modifier,
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             content()
         }
     }
 
     @Composable
-    private fun KeyboardButton(onClick: () -> Unit, modifier: Modifier = Modifier, backgroundColor: Color = DarkGray, content: @Composable (() -> Unit)) {
+    private fun KeyboardButton(
+        onClick: () -> Unit,
+        modifier: Modifier = Modifier,
+        backgroundColor: Color = DarkGray,
+        content: @Composable (() -> Unit)
+    ) {
         Button(
             modifier = modifier
                 .padding(5.dp)
@@ -316,54 +481,40 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun MathLine(value: String, isActive: Boolean) {
+        val iteractionSource = remember { MutableInteractionSource() }
         val textStyle = if (isActive) {
-            TextStyle(fontSize = 30.sp,
+            TextStyle(
+                fontSize = 30.sp,
                 textAlign = TextAlign.End,
                 fontStyle = FontStyle.Normal,
                 fontFamily = FontFamily.Serif,
                 color = Color.White
             )
         } else {
-            TextStyle(fontSize = 20.sp,
+            TextStyle(
+                fontSize = 20.sp,
                 textAlign = TextAlign.End,
                 fontStyle = FontStyle.Normal,
                 fontFamily = FontFamily.Serif,
                 color = MediumGray
             )
         }
+        val keyboardController = LocalSoftwareKeyboardController.current
         BasicTextField(
             value = value,
             onValueChange = {},
-            readOnly = true,
+            readOnly = false,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.Red),
-            textStyle = textStyle
+                .background(Color.Transparent)
+                .onFocusChanged {
+                    keyboardController?.hide()
+                },
+            textStyle = textStyle,
+            interactionSource = iteractionSource,
+            keyboardOptions = KeyboardOptions.Default.copy(),
+
         )
-    }
-
-    private class LimitedList<T>(val maxSize: Int) {
-        private val _items = mutableStateListOf<T>()
-        val size
-            get() = _items.size
-        val items
-            get() = _items.toList()
-
-        init {
-            require(maxSize >= 0) { "List size cannot be less than 0." }
-        }
-
-        fun add(item: T){
-            if (size == maxSize) {
-                drop(0)
-            }
-            _items.add(item)
-        }
-
-        fun drop(position: Int){
-            require(position in 0..<size) { "Position out of bounds." }
-            _items.removeAt(position)
-        }
     }
 
 }
