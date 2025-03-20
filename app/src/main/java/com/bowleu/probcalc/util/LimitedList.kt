@@ -28,4 +28,8 @@ class LimitedList<T>(val maxSize: Int) {
     fun get(position: Int): T? {
         return _items.getOrNull(position)
     }
+
+    fun clear() {
+        _items.clear()
+    }
 }

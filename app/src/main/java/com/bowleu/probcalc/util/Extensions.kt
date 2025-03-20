@@ -15,7 +15,6 @@ fun Char.isOpeningSymbol(): Boolean {
     return when (this) {
         '(' -> true
         '√' -> true
-        ',' -> true
         else -> this.isLetter()
     }
 }
@@ -24,7 +23,11 @@ fun Char.isClosingSymbol(): Boolean {
     return when (this) {
         ')' -> true
         '!' -> true
-        ',' -> true
         else -> false
     }
+}
+
+
+fun String.lastChar(): Char {
+    return this[lastIndex]
 }
