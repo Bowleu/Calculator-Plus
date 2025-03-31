@@ -14,13 +14,14 @@ import kotlin.math.sqrt
 import kotlin.math.tan
 import kotlin.math.PI
 import kotlin.math.E
+import kotlin.math.log
 
 object Calculator {
     private const val TAG = "Calculator"
 
-    private val precedence = mapOf("+" to 1, "-" to 1, "×" to 2, "÷" to 2, "^" to 3)
-    private val unaryLeftFunctions = setOf("sin", "cos", "tan", "asin", "acos", "atan", "lg", "ln", "√")
-    private val unaryRightFunctions = setOf("!")
+    private val precedence = mapOf("+" to 1, "-" to 1, "×" to 2, "÷" to 2, "^" to 3, "log" to 4, "¬C" to 4, "C" to 4, "P" to 4, "A" to 4)
+    private val leftFunctions = setOf("sin", "cos", "tan", "asin", "acos", "atan", "lg", "ln", "√", "¬C")
+    private val rightFunctions = setOf("!")
 
     fun calculate(expression: String): String {
         val infixTokens = toPostfix(tokenize(expression)).toMutableList()
@@ -30,12 +31,13 @@ object Calculator {
             when {
                 infixTokens[i].matches("""\d+,?\d*|e|π""".toRegex()) -> {
                     if (infixTokens[i] == "e")
-                        infixTokens[i] = E.toString()
+                        infixTokens[i] = E.toString() // Заменяем e, pi на соответствующие числа
                     else if (infixTokens[i] == "π")
                         infixTokens[i] = PI.toString()
                     lastNumbers++
                 }
                 infixTokens[i] in precedence.keys -> {
+                    Log.d(TAG, infixTokens.toString())
                     if (lastNumbers < 2)
                         throw IllegalStateException("Binary operator without two operands.")
                     val operator = infixTokens.removeAt(i)
@@ -45,7 +47,7 @@ object Calculator {
                     lastNumbers -= 1
                     i -= 2
                 }
-                infixTokens[i] in unaryLeftFunctions + unaryRightFunctions -> {
+                infixTokens[i] in leftFunctions + rightFunctions -> {
                     if (lastNumbers < 1)
                         throw IllegalStateException("Unary operator without operand.")
                     val operator = infixTokens.removeAt(i)
@@ -95,7 +97,7 @@ object Calculator {
     }
 
     private fun tokenize(expression: String): List<String> {
-        val regex = """(\d+,?\d*|e|π|ln|lg|asin|acos|atan|sin|cos|tan|C\(\d+,\d+\)|A\(\d+,\d+\)|!C\(\d+,\d+\)|P\(\d+,\d+\)|\+|√|-|×|÷|\^|\(|\)|!)""".toRegex()
+        val regex = """(\((.*),(.*)\)|\d+,?\d*|e|π|ln|lg|log|P|A|¬C|C|asin|acos|atan|sin|cos|tan|\+|√|-|×|÷|\^|\(|\)|!)""".toRegex()
         return regex.findAll(expression.replace(" ", "")).map{it.value}.toList()
     }
 
@@ -104,9 +106,18 @@ object Calculator {
         val stack = mutableListOf<String>()
 
         val rightAssociative = setOf("^")
-
         for (token in expression) {
             when {
+                token.matches("""\((.*),(.*)\)""".toRegex()) -> {
+                    val matchResult = """\((.*),(.*)\)""".toRegex().find(token)
+                    if (matchResult != null) {
+                        output += toPostfix(tokenize(matchResult.groupValues[1]))
+                        output += toPostfix(tokenize(matchResult.groupValues[2]))
+                        Log.d(TAG, "First arg: ${toPostfix(tokenize(matchResult.groupValues[1]))}")
+                        Log.d(TAG, "Second arg: ${toPostfix(tokenize(matchResult.groupValues[2]))}")
+                        Log.d(TAG, output.toString())
+                    }
+                } // Рассматриваем такую функцию как число
                 token.matches("""\d+,?\d*|e|π""".toRegex()) -> output.add(token) // Число
                 token in precedence.keys -> {
                     while (stack.isNotEmpty() && stack.last() in precedence.keys && stack.last() != "!" &&
@@ -116,7 +127,7 @@ object Calculator {
                     }
                     stack.add(token)
                 }
-                token in unaryRightFunctions -> output.add(token)
+                token in rightFunctions -> output.add(token) // Рассматриваем такую функцию как число
                 token == "(" -> stack.add(token)
                 token == ")" -> {
                     while (stack.isNotEmpty() && stack.last() != "(") {
@@ -124,7 +135,7 @@ object Calculator {
                     }
                     if (stack.isNotEmpty() && stack.last() == "(") {
                         stack.removeAt(stack.lastIndex) // Удаляем "("
-                        if (stack.isNotEmpty() && stack.last() in unaryLeftFunctions) {
+                        if (stack.isNotEmpty() && stack.last() in leftFunctions) {
                             output.add(stack.removeAt(stack.lastIndex))
                         }
                     }
@@ -145,6 +156,10 @@ object Calculator {
             "×" -> a * b
             "÷" -> a / b
             "^" -> a.pow(b)
+            "log" -> log(b, a)
+            "C" -> calcComb(a.toInt(), b.toInt()).toDouble()
+            "A" -> calcAccomm(a.toInt(), b.toInt()).toDouble()
+            "¬C" -> calcCombWithReps(a.toInt(), b.toInt()).toDouble()
             else -> a
         }
     }

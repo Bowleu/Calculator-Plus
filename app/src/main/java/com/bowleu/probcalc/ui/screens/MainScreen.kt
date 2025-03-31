@@ -136,7 +136,7 @@ fun MainScreen(viewModel: CalculatorViewModel) {
                         onInputButtonClicked()
                         viewModel.addToExpression("¬С(n, k)")
                     }, modifier = equalWeight) {
-                        ButtonText("!С(n, k)", LightGray)
+                        ButtonText("¬С(n, k)", LightGray)
                     }
                     KeyboardButton(onClick = {
                         onInputButtonClicked()
