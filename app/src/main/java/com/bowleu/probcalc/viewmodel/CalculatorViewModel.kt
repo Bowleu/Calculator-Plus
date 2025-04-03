@@ -27,19 +27,24 @@ class CalculatorViewModel : ViewModel() {
             } else if (_expression.value.lastChar().isDigit() ||
                 _expression.value.lastChar().isClosingSymbol() ||
                 _expression.value.lastChar() == 'e' ||
-                _expression.value.lastChar() == 'π') {
+                _expression.value.lastChar() == 'π'
+            ) {
                 _expression.value += value
+            } else {
+                print("lastChar: ${_expression.value.lastChar()}")
             }
         } else if (value[0].isDigit()) {
             if (_expression.value.isEmpty()
                 || !_expression.value.lastChar().isClosingSymbol()
-                && !_expression.value.lastChar().isLetter()) {
+                && !_expression.value.lastChar().isLetter()
+            ) {
                 _expression.value += value
             }
         } else if (value == "e" || value == "π") {
             if (_expression.value.isEmpty()
                 || !_expression.value.lastChar().isClosingSymbol()
-                && !_expression.value.lastChar().isLetter()) {
+                && !_expression.value.lastChar().isLetter()
+            ) {
                 if (_expression.value.lastChar().isDigit())
                     _expression.value += "×"
                 _expression.value += value
@@ -47,7 +52,7 @@ class CalculatorViewModel : ViewModel() {
         } else if (value == ",") {
             if (_expression.value.isEmpty()) {
                 _expression.value += "0,"
-            } else if (_expression.value.lastChar().isDigit()) {
+            } else {
                 _expression.value += ','
             }
         } else if (value[0].isClosingSymbol()) {
@@ -55,14 +60,19 @@ class CalculatorViewModel : ViewModel() {
                 (_expression.value.lastChar().isDigit() ||
                         _expression.value.lastChar().isClosingSymbol() ||
                         _expression.value.lastChar() == 'e' ||
-                        _expression.value.lastChar() == 'π')) {
+                        _expression.value.lastChar() == 'π')
+            ) {
                 _expression.value += value
             }
         } else {
             if (_expression.value.isEmpty() ||
                 _expression.value.lastChar().isOperator() ||
-                _expression.value.lastChar().isOpeningSymbol()) {
+                _expression.value.lastChar().isOpeningSymbol() ||
+                _expression.value.lastChar() == ','
+            ) {
                 _expression.value += value
+            } else if (_expression.value.lastChar().isDigit()) {
+                _expression.value += "×$value"
             }
         }
     }
@@ -72,7 +82,11 @@ class CalculatorViewModel : ViewModel() {
     }
 
     fun calculate() {
-        _result.value = calculator.calculate(_expression.value)
+        _result.value = try {
+            calculator.calculate(_expression.value)
+        } catch (e: Exception) {
+            "Error"
+        }
     }
 
     fun clearExpression() {

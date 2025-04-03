@@ -3,7 +3,6 @@ package com.bowleu.probcalc.ui.screens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.content.MediaType.Companion.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,7 +51,6 @@ import com.bowleu.probcalc.ui.theme.LightGray
 import com.bowleu.probcalc.ui.theme.MediumGray
 import com.bowleu.probcalc.ui.theme.Orange
 import com.bowleu.probcalc.util.LimitedList
-import com.bowleu.probcalc.util.isClosingSymbol
 import com.bowleu.probcalc.viewmodel.CalculatorViewModel
 
 @Composable
@@ -114,7 +112,7 @@ fun MainScreen(viewModel: CalculatorViewModel) {
                 ButtonsRow(equalWeightRow) {
                     KeyboardButton(
                         onClick = {
-                            viewModel.addToExpression("C(n, k)")
+                            viewModel.addToExpression("C(")
                         },
                         modifier = equalWeight
                     ) {
@@ -122,27 +120,27 @@ fun MainScreen(viewModel: CalculatorViewModel) {
                     }
                     KeyboardButton(onClick = {
                         onInputButtonClicked()
-                        viewModel.addToExpression("A(n, k)")
+                        viewModel.addToExpression("A(")
                     }, modifier = equalWeight) {
                         ButtonText("A(n, k)", LightGray)
                     }
                     KeyboardButton(onClick = {
                         onInputButtonClicked()
-                        viewModel.addToExpression("P(n, k)")
-                    }, modifier = equalWeight) {
-                        ButtonText("P(n, k)", LightGray)
-                    }
-                    KeyboardButton(onClick = {
-                        onInputButtonClicked()
-                        viewModel.addToExpression("¬С(n, k)")
+                        viewModel.addToExpression("¬С(")
                     }, modifier = equalWeight) {
                         ButtonText("¬С(n, k)", LightGray)
                     }
                     KeyboardButton(onClick = {
                         onInputButtonClicked()
-                        //viewModel.addToExpression("∑")
+                        viewModel.addToExpression("ceil(")
                     }, modifier = equalWeight) {
-                        ButtonText("", LightGray)
+                        ButtonText("ceil(x)", LightGray)
+                    }
+                    KeyboardButton(onClick = {
+                        onInputButtonClicked()
+                        viewModel.addToExpression("floor(")
+                    }, modifier = equalWeight) {
+                        ButtonText("floor(x)", LightGray)
                     }
                 }
                 ButtonsRow(equalWeightRow) {
@@ -153,7 +151,7 @@ fun MainScreen(viewModel: CalculatorViewModel) {
                     }
                     KeyboardButton(onClick = {
                         onInputButtonClicked()
-                        viewModel.addToExpression("log(,)")
+                        viewModel.addToExpression("log(")
                     }, modifier = equalWeight) {
                         ButtonText("log(n, k)", LightGray)
                     }
@@ -378,11 +376,12 @@ fun MainScreen(viewModel: CalculatorViewModel) {
                 }
             }
             ButtonsRow(equalWeightRow) {
-                KeyboardButton(onClick =
-                {
-                    areAllVisible = !areAllVisible
-                    println("areAllVisible: $areAllVisible")
-                }, modifier = equalWeight
+                KeyboardButton(
+                    onClick =
+                        {
+                            areAllVisible = !areAllVisible
+                            println("areAllVisible: $areAllVisible")
+                        }, modifier = equalWeight
                 ) {
                     val rotationAngle by animateFloatAsState(
                         targetValue = if (areAllVisible) 180F else 0F,

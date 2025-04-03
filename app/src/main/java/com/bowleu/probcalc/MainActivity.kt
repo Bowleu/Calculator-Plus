@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.bowleu.probcalc.ui.screens.MainScreen
+import com.bowleu.probcalc.ui.theme.ProbCalcTheme
 import com.bowleu.probcalc.viewmodel.CalculatorViewModel
 
 class MainActivity : ComponentActivity() {
@@ -12,7 +13,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MainScreen(CalculatorViewModel())
+            ProbCalcTheme {
+                MainScreen(CalculatorViewModel())
+            }
         }
     }
 }

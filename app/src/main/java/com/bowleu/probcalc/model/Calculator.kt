@@ -1,54 +1,69 @@
 package com.bowleu.probcalc.model
 
 import android.util.Log
+import com.bowleu.probcalc.util.isNumber
+import com.bowleu.probcalc.util.round
+import kotlin.math.E
+import kotlin.math.PI
 import kotlin.math.acos
 import kotlin.math.asin
 import kotlin.math.atan
+import kotlin.math.ceil
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.ln
+import kotlin.math.log
 import kotlin.math.log10
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
-import kotlin.math.PI
-import kotlin.math.E
-import kotlin.math.log
 
 object Calculator {
     private const val TAG = "Calculator"
-
-    private val precedence = mapOf("+" to 1, "-" to 1, "×" to 2, "÷" to 2, "^" to 3, "log" to 4, "¬C" to 4, "C" to 4, "P" to 4, "A" to 4)
-    private val leftFunctions = setOf("sin", "cos", "tan", "asin", "acos", "atan", "lg", "ln", "√", "¬C")
+    private val precedence = mapOf(
+        "+" to 1,
+        "-" to 1,
+        "×" to 2,
+        "÷" to 2,
+        "^" to 3,
+        "log" to 4,
+        "¬C" to 4,
+        "C" to 4,
+        "A" to 4
+    )
+    private val leftFunctions =
+        setOf("sin", "cos", "tan", "asin", "acos", "atan", "lg", "ln", "√", "¬C", "ceil", "floor")
     private val rightFunctions = setOf("!")
 
     fun calculate(expression: String): String {
         val infixTokens = toPostfix(tokenize(expression)).toMutableList()
-        var lastNumbers = 0
         var i = 0
         while (i < infixTokens.size) {
             when {
-                infixTokens[i].matches("""\d+,?\d*|e|π""".toRegex()) -> {
+                infixTokens[i].isNumber() -> {
                     if (infixTokens[i] == "e")
                         infixTokens[i] = E.toString() // Заменяем e, pi на соответствующие числа
                     else if (infixTokens[i] == "π")
                         infixTokens[i] = PI.toString()
-                    lastNumbers++
                 }
+
                 infixTokens[i] in precedence.keys -> {
                     Log.d(TAG, infixTokens.toString())
-                    if (lastNumbers < 2)
+                    if (!infixTokens[i - 1].isNumber() || !infixTokens[i - 2].isNumber())
                         throw IllegalStateException("Binary operator without two operands.")
                     val operator = infixTokens.removeAt(i)
                     val secondNumber = infixTokens.removeAt(i - 1).replace(",", ".").toDouble()
                     val firstNumber = infixTokens[i - 2].replace(",", ".").toDouble()
-                    infixTokens[i - 2] = simpleCalculation(firstNumber, secondNumber, operator).toString()
-                    lastNumbers -= 1
+                    infixTokens[i - 2] =
+                        simpleCalculation(firstNumber, secondNumber, operator).toString()
                     i -= 2
+                    Log.d(TAG, infixTokens.toString())
                 }
+
                 infixTokens[i] in leftFunctions + rightFunctions -> {
-                    if (lastNumbers < 1)
+                    if (!infixTokens[i - 1].isNumber())
                         throw IllegalStateException("Unary operator without operand.")
                     val operator = infixTokens.removeAt(i)
                     val number = infixTokens[i - 1].replace(",", ".").toDouble()
@@ -59,7 +74,8 @@ object Calculator {
             Log.d(TAG, infixTokens.toString())
             i++
         }
-        return infixTokens.last().replace(".", ",").run {
+        val answer = infixTokens.last().toDouble().round(8).toString()
+        return answer.replace(".", ",").run {
             if (this.endsWith(",0")) dropLast(2) else this
         }
     }
@@ -97,8 +113,9 @@ object Calculator {
     }
 
     private fun tokenize(expression: String): List<String> {
-        val regex = """(\((.*),(.*)\)|\d+,?\d*|e|π|ln|lg|log|P|A|¬C|C|asin|acos|atan|sin|cos|tan|\+|√|-|×|÷|\^|\(|\)|!)""".toRegex()
-        return regex.findAll(expression.replace(" ", "")).map{it.value}.toList()
+        val regex =
+            """(\d+,?\d*|\((.*),(.*)\)|ceil|floor|e|π|ln|lg|log|P|A|¬C|C|asin|acos|atan|sin|cos|tan|\+|√|-|×|÷|\^|\(|\)|!)""".toRegex()
+        return regex.findAll(expression.replace(" ", "")).map { it.value }.toList()
     }
 
     private fun toPostfix(expression: List<String>): List<String> {
@@ -122,11 +139,13 @@ object Calculator {
                 token in precedence.keys -> {
                     while (stack.isNotEmpty() && stack.last() in precedence.keys && stack.last() != "!" &&
                         ((token !in rightAssociative && precedence[token]!! <= precedence[stack.last()]!!) ||
-                                (token in rightAssociative && precedence[token]!! < precedence[stack.last()]!!))) {
+                                (token in rightAssociative && precedence[token]!! < precedence[stack.last()]!!))
+                    ) {
                         output.add(stack.removeAt(stack.lastIndex))
                     }
                     stack.add(token)
                 }
+
                 token in rightFunctions -> output.add(token) // Рассматриваем такую функцию как число
                 token == "(" -> stack.add(token)
                 token == ")" -> {
@@ -140,6 +159,7 @@ object Calculator {
                         }
                     }
                 }
+
                 else -> stack.add(token)
             }
         }
@@ -149,7 +169,7 @@ object Calculator {
         return output
     }
 
-    private fun simpleCalculation(a: Double, b: Double, operator: String): Double {
+    fun simpleCalculation(a: Double, b: Double, operator: String): Double {
         return when (operator) {
             "+" -> a + b
             "-" -> a - b
@@ -164,7 +184,7 @@ object Calculator {
         }
     }
 
-    private fun simpleCalculation(a: Double, function: String): Double {
+    fun simpleCalculation(a: Double, function: String): Double {
         return when (function) {
             "sin" -> sin(a)
             "cos" -> cos(a)
@@ -176,6 +196,8 @@ object Calculator {
             "lg" -> log10(a)
             "ln" -> ln(a)
             "!" -> calcFact(a.toInt()).toDouble()
+            "ceil" -> ceil(a)
+            "floor" -> floor(a)
             else -> a
         }
     }
