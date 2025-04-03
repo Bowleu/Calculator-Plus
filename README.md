@@ -9,3 +9,4 @@ Calculator+ - расширенная версия стандартного ка�
 - MVVM
 - [Gradle Gependency Analyzer](https://github.com/autonomousapps/dependency-analysis-gradle-plugin)
 ## Скриншот
+![Uploading Screenshot_20250403_145214.png…](Скриншот)
